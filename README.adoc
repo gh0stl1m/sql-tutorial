@@ -102,7 +102,7 @@ image::images/DataModeling.jpg[Data Modeling]
 |INT, INTEGER|4 bytes|-2147483648/0|2147483647/4294967295
 |BIGINT|8 bytes|-9223372036854775808/0|9223372036854775807/18446744073709551615
 |FLOAT|4 bytes||
-|FLOAT(x)|4 bytes if 0 <= x <= 24, 8 bytes if 25 <= x <= 53||
+|FLOAT(x)|4 bytes if 0 \<= x \<= 24, 8 bytes if 25 \<= x \<= 53||
 |DOUBLE|8 bytes||
 |DECIMAL(M,D), NUMERIC (M, D)|||
 |BIT(M)|Aproximadamente (M+7)/8 bytes||
@@ -129,10 +129,10 @@ Si las fechas son invalidad son convertidas a "zero" value.
 === String Types
 |=======
 |Tipo de columna|Almacenamiento requerido|Máxima Longitud
-|CHAR(M)|M bytes, 0 <= M <= 255|255
-|VARCHAR(M)|L+1 bytes, donde L <= M y 0 <= M <= 255|255
-|BINARY(M)|M bytes, 0 <= M <= 255|255
-|VARBINARY(M)|L+1 bytes, donde L <= M y 0 <= M <= 255|255
+|CHAR(M)|M bytes, 0 \<= M \<= 255|255
+|VARCHAR(M)|L+1 bytes, donde L \<= M y 0 \<= M \<= 255|255
+|BINARY(M)|M bytes, 0 \<= M \<= 255|255
+|VARBINARY(M)|L+1 bytes, donde L \<= M y 0 \<= M \<= 255|255
 |TINYBLOB, TINYTEXT|L+1 byte, donde L < 2^8|255
 |BLOB, TEXT|L+2 bytes, donde L < 2^16|65535
 |MEDIUMBLOB, MEDIUMTEXT|L+3 bytes, donde L < 2^24|16,777,215
@@ -408,7 +408,7 @@ La clausula WHERE sirve para agregar condiciones de filtrado para los datos.
 -- Seleccionamos todos los alumnos donde sus promedio es 7
 SELECT * FROM alumnos WHERE promedio = 7;
 -- Seleccionamos todos los alumnos donde sus promedio es NULL (Indefinido)
-SELECT * FROM alumnos WHERE promedio <=> NULL;
+SELECT * FROM alumnos WHERE promedio \<\=> NULL;
 -- Seleccionamos todos los alumnos donde sus promedio es NULL (Indefinido)
 SELECT * FROM alumnos WHERE promedio IS NULL;
 
