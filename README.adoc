@@ -282,6 +282,61 @@ MySQL hay cinco tipos de índices:
 En algunas DB podemos crear tablas temporales, la ventaja de estas tablas es que son solo visibles dentro de la conexión en cuales fueron creadas y al cerrar la conexión serán eliminadas, de esta manera dos personas con distintas conexiones podrían usar el mismo nombre para una tabla del tipo temporal. Además estas tablas son borradas automáticamente al cerrar la conexión.
 En general se usan para cálculos auxiliares ya sea consolidar datos o aplicar criterios de búsqueda o agrupación.
 
+== TRUNCATE vs DELETE
+
+La sentencia TRUNCATE TABLE nos permite dejar vacía una tabla de forma simple y sencilla.
+
+|=======
+|TRUNCATE|DELETE
+|DDL|DML
+|Desasigna las paginas de memoria|Remueve fila por fila
+|Rapido|Lento
+|No invoca los triggers de DELETE|Invoca triggers de DELETE
+|Resetea AUTO_INCREMENT|No Resetea AUTO_INCREMENT
+|Menor Locking|Mayor Locking
+|Remueve todas las paginas|Puede dejar paginas en blanco
+|=======
+
+== Producto Cartesiano
+
+Este es uno de los problemas mas típicos y peligrosos que podemos tener con nuestras sentencias SELECTs.
+
+[source,sql]
+--
+-- Esta consulta nos devuelve todos los registros de la tabla turnos
+SELECT 
+    *
+FROM
+    turnos;
+
+-- La siguiente consulta genera un PRODUCTO CARTESIANO ya que nos estamos estableciendo ninguna condicion de union entre ellas, por los tanto cada fila de une con todas las demas
+SELECT
+    *
+FROM
+    turnos t1,
+    turnos t2;
+--
+
+image::images/CartesianProduct.jpg[CartesianProduct]
+
+== Escape characters
+
+En algunas situaciones debemos escapear los caracteres para que no se interpreten de forma especial, dependiendo si usamos el operador = o LIKE, la forma puede variar. Esto se debe a que el LIKE remueve una \ al hacer el parseo y otro al hacer la comparación.
+
+|=======
+|Operador =|Operador LIKE|Caracter representado
+|\'|\\'|Comillas simples
+|\"|\\"|Comillas dobles
+|\b|\\b|Backspace
+|\n|\\n|New Line(Line feed)
+|\r|\\r|Carriage return
+|\t|\\t|Tab
+|\Z|\\Z|ASCII 26 (Control+Z)
+|\\|\\\\|Backslash
+|\%|\\%%|Porcentaje
+|\_|\\_|Guion bajo
+|=======
+
 == DDL Sentences
 
 Vamos a ver algunas sentencias del tipo DDL (Data Definition Language).
@@ -487,9 +542,9 @@ SELECT * FROM institutos WHERE cantidad_personal > 100 AND barrio \<\=> NULL;
 |NULL|VERDADERO|*NULL*
 |=======
 
-=== Sentencia Between
+=== BETWEEN
 
-Between se usa para filtrado por rangos. Esta se puede aplicar con números, fechas. Se puede usar con el NOT.
+Se utiliza para aplicar un filtro por rangos. Esta se puede aplicar con números, fechas. Se puede usar con el NOT.
 
 [source,sql]
 --
@@ -506,8 +561,104 @@ SELECT * FROM alumnos WHERE fecha_nacimiento BETWEEN '1980-01-01' AND '1986-01-0
 SELECT * FROM alumnos WHERE fecha_nacimiento NOT BETWEEN '1980-01-01' AND '1986-01-07';
 
 -- Recuperamos todos los alumnos que el campo auditoria esta dentro de un rango especifico (Es importante notar que el campo es del tipo TIMESTAMP por eso necesitamos incluir hora:minutos:segundos para el filtrado)
-SELECT * FROM alumnos WHERE auditoria BETWEEN '2013-01-01 00:00:00' AND '2013-03-17 23:59:59'
+SELECT * FROM alumnos WHERE auditoria BETWEEN '2013-01-01 00:00:00' AND '2013-03-17 23:59:59';
 
 -- Recuperamos todos los alumnos que el campo auditoria No esta dentro de un rango especifico
-SELECT * FROM alumnos WHERE auditoria NOT BETWEEN '2013-01-01 00:00:00' AND '2013-03-17 23:59:59'
+SELECT * FROM alumnos WHERE auditoria NOT BETWEEN '2013-01-01 00:00:00' AND '2013-03-17 23:59:59';
+--
+
+=== IN
+
+Se utiliza para aplicar un filtro por un conjunto de valores, cada valor debe estar separado por coma. Se puede usar con el NOT.
+
+[source,sql]
+--
+-- Seleccionamos todos los alumnos donde las materias cursadas es (1 OR 5 OR 6)
+SELECT * FROM alumnos WHERE materias_cursadas IN (1, 5, 6);
+
+-- Seleccionamos todos los alumnos donde las materias cursadas NO es (1 OR 5 OR 6)
+SELECT * FROM alumnos WHERE materias_cursadas NOT IN (1, 5, 6);
+
+-- Seleccionamos todos los alumnos donde la fecha de nacimiento es alguna de las dos del grupo
+SELECT * FROM alumnos WHERE fecha_nacimiento IN ('1986-01-07', '1984-03-04');
+
+-- Seleccionamos todos los alumnos donde la fecha de nacimiento NO es alguna de las dos del grupo
+SELECT * FROM alumnos WHERE fecha_nacimiento NOT IN ('1986-01-07', '1984-03-04');
+
+-- Seleccionamos todos los alumnos donde el nombre es igual a alguno del grupo
+SELECT * FROM alumnos WHERE nombre IN ('Patricia', 'Lorena');
+
+-- Seleccionamos todos los alumnos donde el nombre NO es igual a alguno del grupo
+SELECT * FROM alumnos WHERE nombre NOT IN ('Patricia', 'Lorena');
+--
+
+=== LIKE
+
+Se utiliza para aplicar un filtro usando un patrón, ósea podemos filtrar los datos los cuales la columna seleccionada cumple con el patrón ingresado. También podemos utilizar NOT LIKE. Funciona sobre cualquier tipo de columna números, texto, fechas.
+
+[source,sql]
+--
+-- Seleccionamos todos los alumnos cuyo nombre contenga "na" en cualquier parte
+SELECT * FROM alumnos WHERE nombre LIKE '%na%';
+
+-- Seleccionamos todos los alumnos cuyo nombre contenga "na" al final
+SELECT * FROM alumnos WHERE nombre LIKE '%na';
+
+-- Seleccionamos todos los alumnos cuyo nombre contenga "na" al principio
+SELECT * FROM alumnos WHERE nombre LIKE 'na%';
+
+-- Seleccionamos todos los alumnos cuyo nombre contenta "na" al principio luego dos caracteres cualquieras y despues "lia"
+SELECT * FROM alumnos WHERE nombre LIKE 'na__lia';
+
+-- Escapear caracteres
+
+-- Seleccionamos todos los alumnos donde su nombre sea 'Luis%' o sea que contengan el caracter % al final
+SELECT * FROM alumnos WHERE nombre LIKE 'Luis\%';
+
+-- Seleccionamos todos los alumnos donde su nombre se 'Luis_' o sea que contengan el caracter _ al final
+SELECT * FROM alumnos WHERE nombre LIKE 'Luis\_';
+
+-- Seleccionamos todos los alumnos donde su nombre contenga una barra
+SELECT * FROM alumnos WHERE nombre LIKE 'Luis\\\\%';
+--
+
+=== ORDER BY
+
+Se utiliza para definir un criterio para el orden y definir en que forma queremos ordenar los datos, se puede usar una columna sola o N columnas.
+
+[source,sql]
+--
+-- Seleccionamos todos los alumnos pero solo las columnas nombre y apellido. El resultado estara ordenado por nombre en forma ascendente y apellido en forma ascendente
+SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre, apellido;
+
+-- Seleccionamos todos los alumnos pero solo las columnas nombre y apellido. El resultado estara ordenado por nombre en forma ascendente y apellido en forma descendente
+SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre, apellido DESC;
+
+-- Seleccionamos todos los alumnos pero solo las columnas nombre y apellido. El resultado estara ordenado por nombre en forma descendente y apellido en forma ascendente
+SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre DESC, apellido;
+
+-- Seleccionamos todos los alumnos pero solo las columnas nombre y apellido. El resultado estara ordenado por nombre en forma descendente y apellido en forma descendente
+SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre DESC, apellido DESC;
+--
+
+=== COLLATE
+
+Es especifica de MySQL y se utiliza para definir cual es el collation que queremos usar para esa comparación o ordenamiento en ese momento.
+
+[source,sql]
+--
+-- Ordenamos por la columna apellido, si hay mayusculas y minisculas quedan en el orden que fueron ingresados a la tabla
+SELECT apellido FROM alumnos ORDER BY apellido;
+
+-- Ordenamos por la columna apellido, si hay mayusculas y minisculas se ordenaran primero las mayusculas ya que la comparacion es binaria
+SELECT apellido FROM alumnos ORDER BY apellido COLLATE latin1_bin;
+
+-- Selecciona todos los alumnos que se llamen 'lorena' OR 'Lorena', no diferencia entre mayusculas y minusculas
+SELECT * FROM alumnos WHERE nombre = 'lorena';
+
+-- Selecciona todos los alumnos que se llamen 'Lorena'
+SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'Lorena';
+
+-- Selecciona todos los alumnos que se llamen 'lorena'
+SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'lorena';
 --
