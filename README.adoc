@@ -53,11 +53,14 @@ El motor de base de dato sirven para definir, construir y manipular una base de 
 Algunas bases de datos nos permiten configurar el tipo de almacenamiento para sus tablas, dependiendo el caso podriamos querer usar alguno distinto. MySQL provee multiples tipos de almacenamientos, aunque los dos mas populares son InnoDB y MyISAM. InnoDB es el storage por defecto.
 
 === InnoDB
+
 * Soporte de transacciones.
 * Bloqueo de registros.
 * Nos permite tener las características ACID (Atomicity, Consistency, Isolation and Durability), garantizando la integridad de nuestras tablas.
 * Es probable que si nuestra aplicación hace un uso elevado de INSERT y UPDATE notemos un aumento de rendimiento con respecto a MyISAM.
+
 === MyISAM
+
 * Mayor velocidad en general a la hora de recuperar datos.
 * Recomendable para aplicaciones en las que dominan las sentencias SELECT ante los INSERT / UPDATE.
 * Ausencia de características de atomicidad ya que no tiene que hacer comprobaciones de la integridad referencial, ni bloquear las tablas para realizar las operaciones, esto nos lleva como los anteriores puntos a una mayor velocidad.
@@ -94,6 +97,7 @@ image::images/DataModeling.jpg[Data Modeling]
 == MySQL Data Types
 
 === Numeric Types
+
 |=======
 |Tipo de Campo|Tamaño de Almacenamiento|Mínimo (Signed/Unsigned)|Máximo (Signed/Unsigned)
 |TINYINT|1 byte|-128/0|127/255
@@ -109,6 +113,7 @@ image::images/DataModeling.jpg[Data Modeling]
 |=======
 
 === Date Types
+
 |=======
 |Tipo de Campo|Tamaño de Almacenamiento|Zero Value
 |DATE|3 bytes|'0000-00-00'
@@ -127,6 +132,7 @@ image::images/DataModeling.jpg[Data Modeling]
 Si las fechas son invalidad son convertidas a "zero" value.
 
 === String Types
+
 |=======
 |Tipo de columna|Almacenamiento requerido|Máxima Longitud
 |CHAR(M)|M bytes, 0 \<= M \<= 255|255
@@ -148,6 +154,7 @@ Si las fechas son invalidad son convertidas a "zero" value.
 |=======
 
 === Additional Types
+
 |=======
 |Tipo de columna|Almacenamiento requerido|Máxima Longitud
 |ENUM('value1','value2',...)|1 o 2 bytes, dependiendo del número de valores de la enumeración (65,535 valores máximo)|65,535 Miembros
@@ -155,6 +162,7 @@ Si las fechas son invalidad son convertidas a "zero" value.
 |=======
 
 ==== Enum
+
 * Sólo contiene un valor
 * Se puede definir la lista de hasta 65535 valores distintos
 * Si se permite NULL, este será el valor por defecto; sinó, y si no se define con DEFAULT, será el primer valor de la lista (en el ejemplo de arriba, si no defino el DEFAULT ‘medium’, por defecto sería ‘small’)
@@ -342,6 +350,7 @@ En algunas situaciones debemos escapear los caracteres para que no se interprete
 Vamos a ver algunas sentencias del tipo DDL (Data Definition Language).
 
 === Creacion
+
 [source,sql]
 --
 -- Crea el schema donde vamos a trabajar.
@@ -389,6 +398,7 @@ FROM
 --
 
 === Borrado
+
 [source,sql]
 --
 DROP INDEX idx_dni_unique ON tutorial.alumnos;
@@ -405,6 +415,7 @@ DROP SCHEMA tutorial;
 --
 
 === Modificacion
+
 [source,sql]
 --
 ALTER TABLE tutorial.alumnos
@@ -502,6 +513,7 @@ SELECT * FROM institutos WHERE cantidad_personal > 100 AND barrio = NULL;
 -- Devuelve 5 fila
 SELECT * FROM institutos WHERE cantidad_personal > 100 AND barrio \<\=> NULL;
 --
+
 === Operadores lógicos (AND/OR)
 
 |=======
@@ -662,3 +674,122 @@ SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'Lorena';
 -- Selecciona todos los alumnos que se llamen 'lorena'
 SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'lorena';
 --
+
+=== INSERT
+
+Sirve para insertar registro en una tabla.
+
+[source,sql]
+--
+-- Insertamos un nuevo registro en la tabla alumnos. No mencionamos la columna id_alumno ni auditoria ya que la primera es auto incremental y la otra tiene un default value
+INSERT INTO tutorial.alumnos (
+    'nombre',
+    'apellido',
+    'dni',
+    'fecha_nacimiento',
+    'materias_cursadas',
+    'promedio',
+    'activo')
+VALUES (
+    'Cosme',
+    'Fulanito',
+    '12345678',
+    '1985-06-05',
+    19,
+    9.3,
+    1
+);
+--
+
+Tambien podemos utilizar una forma de INSERT mas simplificada donde no mencionamos las columnas ya que proveemos valores para todas.
+
+[source,sql]
+--
+INSERT INTO tutorial.turnos VALUES (
+    4,
+    'Trasnoche',
+    1);
+--
+
+Un problema que puede surgir es el famoso "Duplicate Key", si intentamos realizar dos INSERT con la misma primary key.
+
+[source,sql]
+--
+INSERT INTO tutorial.turnos VALUES (
+    5,
+    'NuevoTurno',
+    1);
+
+INSERT INTO tutorial.turnos VALUES (
+    5,
+    'NuevoTurno',
+    1);
+--
+
+MySQL ofrece una opcion para hacer IGNORE en caso de "Duplicate Key" y hacer un UPDATE en respuesta.
+
+[source,sql]
+--
+-- Aca vemos todos los datos de la tabla turnos
+SELECT * FROM turnos;
+
+-- Insertamos un nuevo turno y lo dejamos desactivado
+INSERT INTO turnos VALUES (4, 'Trasnoche', 0);
+
+-- Ahora probamos insertar el mismo ID que antes, pero si usamos IGNORE no marca error
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0);
+
+-- Luego ademas de usar el IGNORE haremos un UPDATE frente al DUPLICATE KEY
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0) ON DUPLICATE KEY UPDATE activo = 1;
+
+-- Podemos utilizar VALUES para obtener valores del INSERT
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 1) ON DUPLICATE KEY UPDATE activo = VALUES(activo);
+--
+
+En algunas situaciones puede ser que querramos hacer un INSERT en base a un SELECT.
+
+[source,sql]
+--
+DROP TABLE IF EXISTS turnos_backup;
+
+CREATE TABLE turnos_backup
+    SELECT * FROM turnos;
+
+TRUNCATE TABLE turnos_backup;
+
+INSERT INTO turnos_backup
+    SELECT * FROM turnos;
+--
+
+=== DELETE
+
+Sirve para borrar uno o mas registro de una tabla.
+
+[source,sql]
+--
+-- DELETE nos permite borrar uno o mas registros en una tabla
+DELETE FROM
+    cursos
+WHERE
+    codigo_curso = 8;
+--
+
+En algunas situaciones queremos hacer un DELETE masivo
+
+[source,sql]
+--
+-- Si ejecutamos el DELETE sin ninguna clausula WHERE, generamos un DELETE masivo
+DELETE FROM cursos;
+--
+
+Si ejecutamos esto en MySQL puede ser que falle, dado que MySQL por defecto evita que 
+hagamos DELETE masivos y para permitirlos debemos habilitarlos.
+
+[source,sql]
+--
+SET SQL_SAFE_UPDATES = 0;
+--
+
+=== UPDATE
+
+Sirve para actualizar uno o mas registro de una tabla.
