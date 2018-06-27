@@ -341,7 +341,7 @@ En algunas situaciones debemos escapear los caracteres para que no se interprete
 |\t|\\t|Tab
 |\Z|\\Z|ASCII 26 (Control+Z)
 |\\ |\\\\ |Backslash
-|\%|\\%%|Porcentaje
+|\%|\\%|Porcentaje
 |\_|\\_|Guion bajo
 |=======
 
