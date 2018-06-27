@@ -1,7 +1,10 @@
 = DB/SQL-Tutorial
+:toc: macro
+:sectnumlevels: 4
 
 Una pequeña introduccion a conceptos sobre SQL y bases de datos con algunos ejemplos. Algunos conceptos o definiciones pueden ser especificas de MySQL pero se pueden extrapolar a otros motores de base de datos.
 
+toc::[]
 == ¿Que es una base de datos?
 
 * Una base de datos o banco de datos es un conjunto de datos pertenecientes a un mismo contexto y almacenados sistemáticamente para su posterior uso. 
@@ -485,6 +488,139 @@ SELECT * FROM alumnos WHERE promedio >= 4 AND materias_cursadas > 3;
 SELECT * FROM alumnos WHERE promedio = 6 OR promedio = 8.5;
 --
 
+=== INSERT
+
+Sirve para insertar registro en una tabla.
+
+[source,sql]
+--
+-- Insertamos un nuevo registro en la tabla alumnos. No mencionamos la columna id_alumno ni auditoria ya que la primera es auto incremental y la otra tiene un default value
+INSERT INTO tutorial.alumnos (
+    'nombre',
+    'apellido',
+    'dni',
+    'fecha_nacimiento',
+    'materias_cursadas',
+    'promedio',
+    'activo')
+VALUES (
+    'Cosme',
+    'Fulanito',
+    '12345678',
+    '1985-06-05',
+    19,
+    9.3,
+    1
+);
+--
+
+Tambien podemos utilizar una forma de INSERT mas simplificada donde no mencionamos las columnas ya que proveemos valores para todas.
+
+[source,sql]
+--
+INSERT INTO tutorial.turnos VALUES (
+    4,
+    'Trasnoche',
+    1);
+--
+
+Un problema que puede surgir es el famoso "Duplicate Key", si intentamos realizar dos INSERT con la misma primary key.
+
+[source,sql]
+--
+INSERT INTO tutorial.turnos VALUES (
+    5,
+    'NuevoTurno',
+    1);
+
+INSERT INTO tutorial.turnos VALUES (
+    5,
+    'NuevoTurno',
+    1);
+--
+
+MySQL ofrece una opcion para hacer IGNORE en caso de "Duplicate Key" y hacer un UPDATE en respuesta.
+
+[source,sql]
+--
+-- Aca vemos todos los datos de la tabla turnos
+SELECT * FROM turnos;
+
+-- Insertamos un nuevo turno y lo dejamos desactivado
+INSERT INTO turnos VALUES (4, 'Trasnoche', 0);
+
+-- Ahora probamos insertar el mismo ID que antes, pero si usamos IGNORE no marca error
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0);
+
+-- Luego ademas de usar el IGNORE haremos un UPDATE frente al DUPLICATE KEY
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0) ON DUPLICATE KEY UPDATE activo = 1;
+
+-- Podemos utilizar VALUES para obtener valores del INSERT
+INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 1) ON DUPLICATE KEY UPDATE activo = VALUES(activo);
+--
+
+En algunas situaciones puede ser que querramos hacer un INSERT en base a un SELECT.
+
+[source,sql]
+--
+DROP TABLE IF EXISTS turnos_backup;
+
+CREATE TABLE turnos_backup
+    SELECT * FROM turnos;
+
+TRUNCATE TABLE turnos_backup;
+
+INSERT INTO turnos_backup
+    SELECT * FROM turnos;
+--
+
+=== DELETE
+
+Sirve para borrar uno o mas registro de una tabla.
+
+[source,sql]
+--
+-- DELETE nos permite borrar uno o mas registros en una tabla
+DELETE FROM
+    cursos
+WHERE
+    codigo_curso = 8;
+--
+
+En algunas situaciones queremos hacer un DELETE masivo
+
+[source,sql]
+--
+-- Si ejecutamos el DELETE sin ninguna clausula WHERE, generamos un DELETE masivo
+DELETE FROM cursos;
+--
+
+Si ejecutamos esto en MySQL puede ser que falle, dado que MySQL por defecto evita que 
+hagamos DELETE masivos y para permitirlos debemos habilitarlos.
+
+[source,sql]
+--
+SET SQL_SAFE_UPDATES = 0;
+--
+
+=== UPDATE
+
+Sirve para actualizar uno o mas registro de una tabla.
+
+[source,sql]
+--
+UPDATE
+    alumnos
+SET
+    dni = '30421243'
+WHERE
+    id_alumno = 4;
+--
+
+Tanto con el UPDATE asi como con el DELETE podemos caer en el problema de olvidarnos de poner la clausula WHERE y generar un UPDATE masivo.
+
+== Operators
+
 === Operadores de comparación
 
 |=======
@@ -739,138 +875,7 @@ del tipo VARBINARY.
 * BINARY: Es un atributo que indica que los datos se almacenan con el conjunto de caracteres correspondientes al collation, pero se utiliza el collation binario.
 * VARBINARY: Es un tipo de dato para indicar que los datos se almacenan en formato binario.
 
-=== INSERT
-
-Sirve para insertar registro en una tabla.
-
-[source,sql]
---
--- Insertamos un nuevo registro en la tabla alumnos. No mencionamos la columna id_alumno ni auditoria ya que la primera es auto incremental y la otra tiene un default value
-INSERT INTO tutorial.alumnos (
-    'nombre',
-    'apellido',
-    'dni',
-    'fecha_nacimiento',
-    'materias_cursadas',
-    'promedio',
-    'activo')
-VALUES (
-    'Cosme',
-    'Fulanito',
-    '12345678',
-    '1985-06-05',
-    19,
-    9.3,
-    1
-);
---
-
-Tambien podemos utilizar una forma de INSERT mas simplificada donde no mencionamos las columnas ya que proveemos valores para todas.
-
-[source,sql]
---
-INSERT INTO tutorial.turnos VALUES (
-    4,
-    'Trasnoche',
-    1);
---
-
-Un problema que puede surgir es el famoso "Duplicate Key", si intentamos realizar dos INSERT con la misma primary key.
-
-[source,sql]
---
-INSERT INTO tutorial.turnos VALUES (
-    5,
-    'NuevoTurno',
-    1);
-
-INSERT INTO tutorial.turnos VALUES (
-    5,
-    'NuevoTurno',
-    1);
---
-
-MySQL ofrece una opcion para hacer IGNORE en caso de "Duplicate Key" y hacer un UPDATE en respuesta.
-
-[source,sql]
---
--- Aca vemos todos los datos de la tabla turnos
-SELECT * FROM turnos;
-
--- Insertamos un nuevo turno y lo dejamos desactivado
-INSERT INTO turnos VALUES (4, 'Trasnoche', 0);
-
--- Ahora probamos insertar el mismo ID que antes, pero si usamos IGNORE no marca error
-INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0);
-
--- Luego ademas de usar el IGNORE haremos un UPDATE frente al DUPLICATE KEY
-INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 0) ON DUPLICATE KEY UPDATE activo = 1;
-
--- Podemos utilizar VALUES para obtener valores del INSERT
-INSERT IGNORE INTO turnos VALUES (4, 'Trasnoche', 1) ON DUPLICATE KEY UPDATE activo = VALUES(activo);
---
-
-En algunas situaciones puede ser que querramos hacer un INSERT en base a un SELECT.
-
-[source,sql]
---
-DROP TABLE IF EXISTS turnos_backup;
-
-CREATE TABLE turnos_backup
-    SELECT * FROM turnos;
-
-TRUNCATE TABLE turnos_backup;
-
-INSERT INTO turnos_backup
-    SELECT * FROM turnos;
---
-
-=== DELETE
-
-Sirve para borrar uno o mas registro de una tabla.
-
-[source,sql]
---
--- DELETE nos permite borrar uno o mas registros en una tabla
-DELETE FROM
-    cursos
-WHERE
-    codigo_curso = 8;
---
-
-En algunas situaciones queremos hacer un DELETE masivo
-
-[source,sql]
---
--- Si ejecutamos el DELETE sin ninguna clausula WHERE, generamos un DELETE masivo
-DELETE FROM cursos;
---
-
-Si ejecutamos esto en MySQL puede ser que falle, dado que MySQL por defecto evita que 
-hagamos DELETE masivos y para permitirlos debemos habilitarlos.
-
-[source,sql]
---
-SET SQL_SAFE_UPDATES = 0;
---
-
-=== UPDATE
-
-Sirve para actualizar uno o mas registro de una tabla.
-
-[source,sql]
---
-UPDATE
-    alumnos
-SET
-    dni = '30421243'
-WHERE
-    id_alumno = 4;
---
-
-Tanto con el UPDATE asi como con el DELETE podemos caer en el problema de olvidarnos de poner la clausula WHERE y generar un UPDATE masivo.
-
-=== Subqueries
+== Subqueries
 
 [source,sql]
 --
