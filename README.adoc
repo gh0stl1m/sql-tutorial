@@ -340,7 +340,7 @@ En algunas situaciones debemos escapear los caracteres para que no se interprete
 |\r|\\r|Carriage return
 |\t|\\t|Tab
 |\Z|\\Z|ASCII 26 (Control+Z)
-|\\|\\\\|Backslash
+|\\ |\\\\ |Backslash
 |\%|\\%%|Porcentaje
 |\_|\\_|Guion bajo
 |=======
