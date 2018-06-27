@@ -84,7 +84,7 @@ image::images/ANSI.jpg[ANSI]
 
 * SQL (Structured Query Language): Es un lenguaje declarativo de acceso a bases de datos relacionales. i.e: SELECT * FROM people.
 
-* Commands (Comandos): Son instrucciones que brinda el servidor de bases de datos para obtener determinada información. i.e: SHOW DATABASES.
+* Commands (Comandos): Son instrucciones que brinda el servidor de bases de datos para obtener determinada información. i.e: SHOW DATABASES, SHOW STATUS, SHOW VARIABLES, DESCRIBE <TABLE_NAME>.
 
 == SQL Sentences
 
@@ -653,6 +653,50 @@ SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre DESC, apellido;
 SELECT * FROM nombre, apellido FROM alumnos ORDER BY nombre DESC, apellido DESC;
 --
 
+=== LIMIT
+
+La clausula LIMIT es útil para pedir un cierto numero de registros. En otros motores de base de datos se llama TOP.
+
+[source,sql]
+--
+-- Esta consulta devuelve todos los registros que contiene la tabla
+SELECT * FROM alumnos;
+
+-- Esta consulta devuelve todos los registros donde materias_cursadas es mayor a 8, lo cual podrian ser todos, algunos o ningun registro, no tengo control sobre el maximo numero de registros que puede retornar
+SELECT * FROM alumnos WHERE materias_cursadas > 8;
+
+-- Esta consulta pone un maximo de 10 para la cantidad de registros devueltos
+SELECT * FROM alumnos WHERE materias_cursadas > 8 LIMIT 10;
+
+-- Aqui estamos poniendo un maximo de 2 registros pero empezando desde el 5
+SELECT * FROM alumnos WHERE materias_cursadas > 8 LIMIT 5, 2;
+
+-- Esta consulta retorna lo mismo que simplemente LIMIT 10, ya que si no definimos el offset este se considera 0
+SELECT * FROM alumnos WHERE materias_cursadas > 8 LIMIT 0, 10;
+--
+
+=== IFNULL & CASE
+
+La función IFNULL y la estructura CASE son muy usadas en muchas consultas. Estas varian de nombre dependiendo el motor de base de datos.
+
+* IFNULL: Recibe dos parámetros y si el primero es NULL devuelve el segundo.
+* CASE: Es una estructura de control.
+
+[source,sql]
+--
+SELECT
+    id_instituto,
+    barrio,
+    IFNULL(barrio, 'No tiene barrio asignado') AS 'Comentario',
+    CASE
+        WHEN barrio = 'Puerto Madero' THEN 'Barrio centrico'
+        WHEN barrio = 'Recoleta' THEN 'Barrio centrico'
+        ELSE THEN 'Barrio no centrico'
+    END AS 'Descripcion'
+FROM
+    institutos;
+--
+
 === COLLATE
 
 Es especifica de MySQL y se utiliza para definir cual es el collation que queremos usar para esa comparación o ordenamiento en ese momento.
@@ -674,6 +718,26 @@ SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'Lorena';
 -- Selecciona todos los alumnos que se llamen 'lorena'
 SELECT * FROM alumnos WHERE nombre COLLATE latin1_bin = 'lorena';
 --
+
+Cuando hablamos de COLLATE tambien es importante hablar del atributo BINARY el cual puede ser definido a nivel de columna.
+
+[source,sql]
+--
+-- Si el collation es "latin 1 - default collation" no hay diferencia en las siguientes dos consultas
+SELECT * FROM alumnos WHERE nombre = 'Lorena';
+SELECT * FROM alumnos WHERE nombre = 'lorena';
+
+-- Si modificamos la columna para que esa columna sea BINARY
+ALTER TABLE alumnos CHANGE COLUMN nombre nombre VARCHAR(100) BINARY NOT NULL;
+
+-- Ahora si veremos diferencia ya que el collation usado sera latin1_bin
+--
+
+Ademas es importante notar la diferencia entre el atributo BINARY a nivel de columna y que una columna sea
+del tipo VARBINARY.
+
+* BINARY: Es un atributo que indica que los datos se almacenan con el conjunto de caracteres correspondientes al collation, pero se utiliza el collation binario.
+* VARBINARY: Es un tipo de dato para indicar que los datos se almacenan en formato binario.
 
 === INSERT
 
@@ -793,3 +857,381 @@ SET SQL_SAFE_UPDATES = 0;
 === UPDATE
 
 Sirve para actualizar uno o mas registro de una tabla.
+
+[source,sql]
+--
+UPDATE
+    alumnos
+SET
+    dni = '30421243'
+WHERE
+    id_alumno = 4;
+--
+
+Tanto con el UPDATE asi como con el DELETE podemos caer en el problema de olvidarnos de poner la clausula WHERE y generar un UPDATE masivo.
+
+=== Subqueries
+
+[source,sql]
+--
+-- Esta consulta retorna todos los registros de la tabla cursos_ofrecidos
+SELECT
+    *
+FROM
+    cursos_ofrecidos;
+
+-- Esta consulta retorna todos los registros con id_turno = 2
+SELECT
+    *
+FROM
+    cursos_ofrecidos
+WHERE
+    id_turno = 2;
+
+-- En algunas ocasiones no sabemos el id de lo que buscamos pero podemos obtenerlo por medio de otra consulta, entonces podemos usar una subconsulta para lograr esto
+SELECT
+    *
+FROM
+    cursos_ofrecidos
+WHERE
+    id_turno = (SELECT id_turno FROM turnos WHERE descripcion = 'Tarde');
+--
+
+Las subconsultas pueden ser usadas de varias formas, incluso podes hacer un FROM del resultado de una subconsulta.
+
+[source,sql]
+--
+-- Aqui actualizamos la cantidad de materias cursadas de un alumno especifico
+UPDATE
+    alumnos
+SET
+    dni = '29346324'
+WHERE
+    id_alumno = 3;
+
+-- Aqui actualiazamos la cantidad de materias cursadas para todos los alumnos que se tengan nombre igual a Nicolas y apellido igual a Franco
+UPDATE
+    alumnos
+SET
+    materias_cursadas = 0
+WHERE
+    id_alumno = (
+        SELECT
+            id_alumno
+        FROM (
+            SELECT
+                id_alumno
+            FROM
+                alumnos
+            WHERE
+                nombre = 'Nicolas' AND
+                apellido = 'Franco'
+        ) AS tabla_consulta
+    );
+--
+
+== Aggregate Functions
+
+En SQL existen ciertas funciones que nos permiten trabajar con grupos de datos.
+
+* COUNT: Nos permite contar registros.
+* MAX: Nos permite obtener el máximo del grupo.
+* MIN: Nos permite obtener el mínimo del grupo.
+* SUM: Nos permite sumar ciertas columnas de un grupo de registros.
+* AVG: Nos brinda el promedio.
+
+=== COUNT
+
+Esta función nos permite saber cuantos registros devuelve nuestra consulta.
+
+[source,sql]
+--
+-- Retorna todos los registros de la tabla institutos
+SELECT * FROM institutos;
+
+-- Retorna el numero de registros de la tabla institutos
+SELECT COUNT(*) FROM institutos;
+
+-- Retorna todos los registros de la tabla institutos que tiene como barrio a Balvanera
+SELECT * FROM institutos WHERE barrio = 'Balvanera';
+
+-- Retorna el numero de registros de la tabla institutos que tiene como barrio a Balvanera
+SELECT COUNT(*) FROM institutos WHERE barrio = 'Balvanera';
+--
+
+Podremos ver algunas variantes del COUNT como COUNT(*), COUNT(0), COUNT(1) no hay ninguna diferencia entre ellas, la unica diferencia sucede cuando en su lugar mencionamos una columna. i.e: COUNT(barrio) donde en este caso contaria todos los barrios distintos de NULL.
+
+[source,sql]
+--
+SELECT COUNT(*) AS Resultado FROM institutos;
+SELECT COUNT(0) AS Resultado FROM institutos;
+SELECT COUNT(1) AS Resultado FROM institutos;
+
+SELECT COUNT(barrio) AS Resultado FROM institutos;
+--
+
+=== MAX
+
+Esta función devuelve el máximo valor de la columna que le indiquemos. Puede trabajar con columnas del tipo Numérico – Fechas – Cadena caracteres.
+
+[source,sql]
+--
+-- Retorna el maximo valor para la columna cantidad_personal, o sea sobre una columna de tipo numerico.
+SELECT MAX(cantidad_personal) AS Resultado FROM institutos;
+
+-- Retorna el maximo valor para la columna fecha_apertura, o sea sobre una columna de tipo fecha.
+SELECT MAX(fecha_apertura) AS Resultado FROM institutos;
+
+-- Retorna el maximo valor para la columna fecha_apertura, o sea sobre una columna de tipo cadena de caracteres, por lo cual usa orden alfabetico.
+SELECT MAX(barrio) AS Resultado FROM institutos;
+
+-- En este caso muestra el maximo valor para cada tipo de columna.
+SELECT 
+    MAX(cantidad_personal) AS Resultado1,
+    MAX(fecha_apertura) AS Resultado2,
+    MAX(barrio) AS Resultado3
+FROM institutos;
+--
+
+=== MIN
+
+Esta función devuelve el mínimo valor de la columna que le indiquemos. Puede trabajar con columnas del tipo Numérico – Fechas – Cadena caracteres.
+
+[source,sql]
+--
+-- Retorna el minimo valor para la columna cantidad_personal, o sea sobre una columna de tipo numerico.
+SELECT MAX(cantidad_personal) AS Resultado FROM institutos;
+
+-- Retorna el minimo valor para la columna fecha_apertura, o sea sobre una columna de tipo fecha.
+SELECT MAX(fecha_apertura) AS Resultado FROM institutos;
+
+-- Retorna el minimo valor para la columna fecha_apertura, o sea sobre una columna de tipo cadena de caracteres, por lo cual usa orden alfabetico.
+SELECT MAX(barrio) AS Resultado FROM institutos;
+
+-- En este caso muestra el maximo valor para cada tipo de columna.
+SELECT 
+    MIN(cantidad_personal) AS Resultado1,
+    MIN(fecha_apertura) AS Resultado2,
+    MIN(barrio) AS Resultado3
+FROM institutos;
+--
+
+=== SUM
+
+Esta función nos devuelve la suma de los valores de una determinada columna en base a los resultados entregados por la consulta principal.
+
+[source,sql]
+--
+-- Suma la columna cantidad_personal de todos los registros
+SELECT SUM(cantidad_personal) FROM institutos;
+
+-- Suma la columna cantidad_personal de aquellos registros donde el barrio sea Balvanera
+SELECT SUM(cantidad_personal) FROM institutos WHERE barrio = 'Balvanera';
+--
+
+=== AVG
+
+Esta función nos devuelve el promedio que se calcula en base a la columna que le proporcionamos.
+
+[source,sql]
+--
+-- Calcula el promedio de la columna cantidad_personal de todos los registros
+SELECT AVG(cantidad_personal) FROM institutos;
+
+-- Calcula el promedio de la columna cantidad_personal de aquellos registros donde el barrio sea Balvanera
+SELECT AVG(cantidad_personal) FROM institutos WHERE barrio = 'Balvanera';
+--
+
+*Nota*: AVG = SUM(columna) / COUNT (*)
+
+== GROUP BY & HAVING
+
+Esta clausula sirve para indicar el criterio de agrupación. En general lo usamos con funciones de agrupación o de agregación (COUNT, MAX, MIN, SUM, AVG).
+
+image::images/GroupBy.jpg[GroupBy]
+
+La idea de de agrupación nos permite unir varias filas en una sola.
+
+[source,sql]
+--
+SELECT barrio FROM institutos;
+
+SELECT barrio FROM institutos GROUP BY barrio;
+--
+
+Dado que la clausula GROUP BY genera grupos de datos, en la clausula del SELECT vamos a mencionar columnas que acabamos de agrupar o funciones de agregacion
+
+[source,sql]
+--
+SELECT
+    barrio,
+    SUM(cantidad_personal) AS Cantidad_De_Personal_Por_Barrio,
+    AVG(cantidad_personal) AS Promedio_Personal_Por_Barrio,
+    COUNT(*) AS Cantidad_De_Filas_Agrupadas,
+    MAX(cantidad_personal) AS Maxima_Cantidad_De_Personal_En_Un_Instituto_Agrupo_Por_Barrio
+FROM
+    institutos
+GROUP BY
+    barrio;
+--
+
+Ademas puede ser que necesitemos aplicar algun filtro a estos datos agrupados, aqui es donde aparece la clausula HAVING, la cual funciona como la zona de filtrado para los datos agrupados.
+
+[source,sql]
+--
+SELECT
+    barrio,
+    SUM(cantidad_personal) AS Cantidad_De_Personal_Por_Barrio,
+    AVG(cantidad_personal) AS Promedio_Personal_Por_Barrio,
+    COUNT(*) AS Cantidad_De_Filas_Agrupadas,
+    MAX(cantidad_personal) AS Maxima_Cantidad_De_Personal_En_Un_Instituto_Agrupo_Por_Barrio
+FROM
+    institutos
+GROUP BY
+    barrio
+HAVING
+    SUM(cantidad_personal) > 200;
+--
+
+*Nota*: Veamos que la diferencia entre el WHERE y el HAVING es el momento cuando se aplican
+
+[source,sql]
+--
+-- Esta consulta primero recorre todas las filas y se queda con aquellas que cumplen la condicion "cantidad_personal > 100" y luego agrupa por barrio
+SELECT
+    barrio
+FROM
+    institutos
+WHERE
+    cantidad_personal > 100
+GROUP BY
+    barrio;
+
+-- Esta consulta primero agrupa las filas y realiza la suma de cantidad de personal en cada barrio, para luego quedarse con aquellas filas donde la suma dio > 100
+SELECT
+    barrio
+FROM
+    institutos
+GROUP BY
+    barrio
+HAVING
+    SUM(cantidad_personal) > 100
+--
+
+== JOINs
+
+En la clausula FROM podemos mencionar varias tablas que luego debemos
+unir estableciendo alguna relacion entre sus columnas (Si no definimos esta relacion, obtenemos un producto cartesiano).
+
+[source,sql]
+--
+-- Consulta simple con una sola tabla
+SELECT
+    cursos_ofrecidos.id_curso,
+    cursos_ofrecidos.id_turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos;
+
+-- Consulta con dos tablas
+SELECT
+    cursos.nombre AS Curso,
+    cursos_ofrecidos.id_turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos,
+    cursos
+WHERE
+    cursos_ofrecidos.id_curso = cursos.id_curso;
+
+-- Consulta con tres tablas
+SELECT
+    cursos.nombre AS Curso,
+    turnos.descripcion AS Turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos,
+    cursos,
+    turnos
+WHERE
+    cursos_ofrecidos.id_curso = cursos.id_curso AND
+    cursos_ofrecidos.id_turno = turnos.id_turno;
+--
+
+=== LEFT JOIN
+
+Este tipo de JOIN trae todos los registros que existen en la tabla de la izquierda sin importar si existen en la derecha.
+
+[source,sql]
+--
+SELECT
+    cursos_ofrecidos.id_curso,
+    cursos_ofrecidos.id_turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos LEFT JOIN
+        cursos ON (cursos_ofrecidos.id_curso = cursos.id_curso);
+--
+
+=== INNER JOIN
+
+Este tipo de JOIN trae todos los registros que existan en ambas tablas.
+
+[source,sql]
+--
+SELECT
+    cursos_ofrecidos.id_curso,
+    cursos_ofrecidos.id_turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos INNER JOIN
+        cursos ON (cursos_ofrecidos.id_curso = cursos.id_curso);
+--
+
+=== RIGHT JOIN
+
+Este tipo de JOIN trae todos los registros que existen en la tabla de la derecha sin importar si existen en la izquierda.
+
+[source,sql]
+--
+SELECT
+    cursos_ofrecidos.id_curso,
+    cursos_ofrecidos.id_turno,
+    cursos_ofrecidos.precio AS Precio
+FROM
+    cursos_ofrecidos RIGHT JOIN
+        cursos ON (cursos_ofrecidos.id_curso = cursos.id_curso);
+--
+
+== JOIN Types
+
+image::images/Joins.jpg[Joins]
+
+== DB Concepts
+
+* DER: El Diagrama de Entidad-Relacion es una forma de representa mis Entidades, Atributos y Relaciones.
+
+* Entidades: Objetos principales acerca de los cuales se almacena información. (Tablas).
+** Entidades Fuertes: Son aquellas que pueden ser identificadas unívocamente.
+** Entidades Débiles: Son aquellas que depende de una entidad fuerte, por ejemplos las “Ediciones” de un “Libro”.
+* Atributos: Describen a las entidades, representan características o cualidades de una entidad. (Columnas).
+* Relaciones: Las relaciones describen cierta interdependencia (De cualquier tipo) entre una o mas entidades. Las relaciones son definidas con claves primarias y foráneas para mantener la integridad referencial.
+
+* Clave Primaria: Es una clave candidata, elegida por el diseñador de la base de datos, para identificar unívocamente los registros/instancias de una entidad.
+** Clave Natural: Está formada por atributos de la entidad en el dominio. Dicho de una forma más sencilla, por atributos que la gente utiliza, como el número de factura o un DNI
+** Clave Subrogada: No tiene un significado de negocio. Puede ser un campo auto-incremental, UUID, un contador almacenado en otra tabla, etc.
+* Clave Candidata: Una entidad puede tener varias llaves candidatas, pero solo se elige una como clave primaria. Serian los atributos que pueden identificar a mi entidad de forma única.
+* Super Llave: Es un conjunto de uno o mas atributos que identifican de manera única a una entidad (Clave compuesta).
+* Clave Foránea: La clave foránea referencia a la clave primaria de una tabla. Esta puede referenciar a la clave primaria de la misma tabla o de otra. La clave foránea nos permite controlar la integridad referencial de los datos.
+
+* Cardinalidad de las relaciones: Una relación describe cierta interdependencia entre una o mas entidades.
+** Uno a Uno: Una instancia de la entidad A se relaciona con una y solamente una de la entidad B.
+*** Alumno - Expediente
+*** Presidente - País
+** Uno a Muchos: Cada instancia de la entidad A se relaciona con varias instancias de la entidad B.
+*** Padre - Hijos
+*** Cliente - Cuentas
+** Muchos a Muchos: Cualquier instancia de la entidad A se relaciona con cualquier instancia de la entidad B.
+*** Alumnos - Cursos
+*** Empresas - Clientes
+
