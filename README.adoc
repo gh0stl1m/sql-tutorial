@@ -66,6 +66,7 @@ Algunas bases de datos nos permiten configurar el tipo de almacenamiento para su
 
 * Mayor velocidad en general a la hora de recuperar datos.
 * Recomendable para aplicaciones en las que dominan las sentencias SELECT ante los INSERT / UPDATE.
+* No soporta transacciones.
 * Ausencia de características de atomicidad ya que no tiene que hacer comprobaciones de la integridad referencial, ni bloquear las tablas para realizar las operaciones, esto nos lleva como los anteriores puntos a una mayor velocidad.
 
 == ACID
