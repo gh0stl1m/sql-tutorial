@@ -94,7 +94,6 @@ A continuacion una lista de los storage engine de MySQL 8.0.11 y MariaD 10.3.
 |TokuDB|✘|✓|El motor de base de datos TokuDB ha sido desarrollado para el procesamiento de grandes cantidades de datos y está especialmente pensado para aplicaciones de macrodatos.
 |=======
 
-
 == ACID
 
 * Atomicidad (Atomicity): La Atomicidad requiere que cada transacción sea "todo o nada": si una parte de la transacción falla, todas las operaciones de la transacción fallan, y por lo tanto la base de datos no sufre cambios. Un sistema atómico tiene que garantizar la atomicidad en cualquier operación y situación, incluyendo fallas de alimentación eléctrica, errores y caidas del sistema.
