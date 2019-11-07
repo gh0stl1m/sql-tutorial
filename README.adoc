@@ -69,6 +69,32 @@ Algunas bases de datos nos permiten configurar el tipo de almacenamiento para su
 * No soporta transacciones.
 * Ausencia de características de atomicidad ya que no tiene que hacer comprobaciones de la integridad referencial, ni bloquear las tablas para realizar las operaciones, esto nos lleva como los anteriores puntos a una mayor velocidad.
 
+A continuacion una lista de los storage engine de MySQL 8.0.11 y MariaD 10.3.
+
+|=======
+|Storage Engine|MySQL|MariaDB|Descripción
+|InnoDB/ XtraDB|✓|✓|InnoDB es el subsistema de almacenamiento estándar para MySQL (a partir de la versión 5.5). Hasta la versión 10.1, MariaDB utilizó la bifurcación de InnoDB ampliada XtraDB a modo de motor de base de datos estándar. A partir de la versión 10.2, InnoDB también se utiliza como subsistema de almacenamiento en MariaDB. InnoDB ofrece accesos de lectura y escritura seguros para transacciones.
+|MyISAM|✓|✓|MyISAM, el subsistema de almacenamiento estándar para las versiones anteriores de MySQL, ofrece accesos rápidos a índices y tablas de bases de datos. Sin embargo, a diferencia de InnoDB, MyISAM no ofrece seguridad en las transacciones.
+|MEMORY|✓|✓|MEMORY es un subsistema de almacenamiento para datos temporales: mientras la definición de tabla se encuentra en el disco duro, los datos se conservan en la memoria principal. MEMORY es apto para bases de datos en memoria con rápidos tiempos de acceso y una latencia reducida.
+|CSV|✓|✓|El motor CSV almacena datos en formato CSV a modo de campos de datos separados por comas.
+|Archive|✓|✓|El motor de base de datos está diseñado para el almacenamiento a largo plazo de grandes cantidades de datos y ofrece diversos algoritmos de compresión que permiten un almacenamiento de datos que ahorra espacio.
+|BLACKHOLE|✓|✓|BLACKHOLE actúa como revisor de instrucciones SQL. En lugar de almacenar datos, BLACKHOLE únicamente registra los elementos de sintaxis SQL.
+|Merge|✓|✓|El motor de base de datos permite combinar varias tablas MyISAM con la misma estructura en una tabla conjunta.
+|Federated/ FederatedX|✓|✓|El subsistema de almacenamiento Federated permite a MySQL acceder de manera remota a tablas ubicadas en otro servidor. MariaDB utiliza la bifurcación FederatedX.
+|ColumnStore|✘|✓|ColumnStore consiste en una transferencia de InfiniDB que permite el procesamiento basado en columnas de grandes cantidades de datos con tamaños en torno a los petabytes.
+|Aria|✘|✓|Desde 2007, Aria se ha desarrollado como una opción de MyISAM resistente a caídas.
+|Cassandra|✘|✓|Gracias a Cassandra, los usuarios de MariaDB cuentan con un motor de base de datos para la gestión de datos estructurados de gran tamaño. El software sigue un planteamiento no relacional (NoSQL) y está diseñado para proporcionar una elevada disponibilidad y seguridad a prueba de fallos (sin único punto de error).
+|CONNECT|✘|✓|El motor de almacenamiento CONNECT permite el acceso a diversas fuentes de datos externas como DBase, CSV, DOS, FMT y XML, tanto de manera local como remota.
+|Mroonga|✘|✓|Mroonga es un motor de base de datos basado en columnas que ofrece búsqueda de texto completo para diversos idiomas, incluidos chino, japonés y coreano.
+|MyRocks|✘|✓|El motor de base de datos MyRocks ha sido optimizado para un rápido almacenamiento de datos de baja latencia y ofrece una compresión considerablemente mejor que el subsistema de almacenamiento estándar InnoDB.
+|OQGRAPH|✘|✓|El motor de computación Open Query GRAPH (abreviado OQGRAPH) permite procesar datos en estructuras de base de datos jerárquicas (estructuras en árbol) y en gráficos complejos.
+|Sequence|✘|✓|El motor de almacenamiento Sequence permite a los usuarios generar secuencias numéricas ascendentes y descendentes de números enteros positivos, incluidos el valor de inicio, de final y el incremento.
+|SphinxSE|✘|✓|Sphinx Storage Engine (SphinxSE) supone una alternativa a la búsqueda de texto completo integrada de MariaDB. La búsqueda de texto es posible gracias al demonio de Sphinx searchd.
+|Spider|✘|✓|Spider es un motor de base de datos con función de sharding (particionamiento). Spider es compatible con el particionamiento de bases de datos y eXtended Architecture (XA). De esta forma, diversos recursos pueden interactuar con una misma transacción. Así es posible utilizar tablas de diferentes instancias de bases de datos como si se tratara de tablas de la misma instancia.
+|TokuDB|✘|✓|El motor de base de datos TokuDB ha sido desarrollado para el procesamiento de grandes cantidades de datos y está especialmente pensado para aplicaciones de macrodatos.
+|=======
+
+
 == ACID
 
 * Atomicidad (Atomicity): La Atomicidad requiere que cada transacción sea "todo o nada": si una parte de la transacción falla, todas las operaciones de la transacción fallan, y por lo tanto la base de datos no sufre cambios. Un sistema atómico tiene que garantizar la atomicidad en cualquier operación y situación, incluyendo fallas de alimentación eléctrica, errores y caidas del sistema.
